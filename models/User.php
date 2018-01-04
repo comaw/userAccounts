@@ -2,103 +2,105 @@
 
 namespace app\models;
 
-class User extends \yii\base\Object implements \yii\web\IdentityInterface
+use Yii;
+use yii\helpers\ArrayHelper;
+
+/**
+ * This is the model class for table "{{%user}}".
+ *
+ * @property int $id
+ * @property string $name
+ * @property string $email
+ * @property string $address
+ *
+ * @property int $accounts
+ * @property string $added
+ *
+ * @property Account $account
+ */
+class User extends \yii\db\ActiveRecord
 {
-    public $id;
-    public $username;
-    public $password;
-    public $authKey;
-    public $accessToken;
-
-    private static $users = [
-        '100' => [
-            'id' => '100',
-            'username' => 'admin',
-            'password' => 'admin',
-            'authKey' => 'test100key',
-            'accessToken' => '100-token',
-        ],
-        '101' => [
-            'id' => '101',
-            'username' => 'demo',
-            'password' => 'demo',
-            'authKey' => 'test101key',
-            'accessToken' => '101-token',
-        ],
-    ];
-
+    public $accounts;
+    public $added;
 
     /**
-     * @inheritdoc
+     * @param bool $insert
+     * @param array $changedAttributes
      */
-    public static function findIdentity($id)
+    public function afterSave($insert, $changedAttributes)
     {
-        return isset(self::$users[$id]) ? new static(self::$users[$id]) : null;
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public static function findIdentityByAccessToken($token, $type = null)
-    {
-        foreach (self::$users as $user) {
-            if ($user['accessToken'] === $token) {
-                return new static($user);
-            }
+        if (is_numeric($this->accounts)) {
+            Account::toggle($this);
         }
 
-        return null;
+        parent::afterSave($insert, $changedAttributes);
     }
 
     /**
-     * Finds user by username
      *
-     * @param string $username
-     * @return static|null
      */
-    public static function findByUsername($username)
+    public function afterFind()
     {
-        foreach (self::$users as $user) {
-            if (strcasecmp($user['username'], $username) === 0) {
-                return new static($user);
-            }
-        }
+        $this->accounts = $this->account->account ?? 0;
 
-        return null;
+        parent::afterFind();
     }
 
     /**
      * @inheritdoc
      */
-    public function getId()
+    public static function tableName()
     {
-        return $this->id;
+        return '{{%user}}';
     }
 
     /**
      * @inheritdoc
      */
-    public function getAuthKey()
+    public function rules()
     {
-        return $this->authKey;
+        return [
+            [['name', 'email', 'address'], 'filter', 'filter' => 'strip_tags'],
+            [['name', 'email', 'address'], 'filter', 'filter' => 'trim'],
+            [['name', 'email', 'address'], 'required'],
+            [['name', 'email', 'address'], 'string', 'max' => 255],
+            [['email'], 'unique'],
+            [['email'], 'email'],
+            [['accounts'], 'integer'],
+            [['added'], 'safe']
+        ];
     }
 
     /**
      * @inheritdoc
      */
-    public function validateAuthKey($authKey)
+    public function attributeLabels()
     {
-        return $this->authKey === $authKey;
+        return [
+            'id' => Yii::t('app', 'ID'),
+            'name' => Yii::t('app', 'Name'),
+            'email' => Yii::t('app', 'Email'),
+            'address' => Yii::t('app', 'Address'),
+            'accounts' => Yii::t('app', 'Accounts'),
+            'added' => Yii::t('app', 'Added'),
+        ];
     }
 
     /**
-     * Validates password
-     *
-     * @param string $password password to validate
-     * @return bool if password provided is valid for current user
+     * @return \yii\db\ActiveQuery
      */
-    public function validatePassword($password)
+    public function getAccount()
     {
-        return $this->password === $password;
+        return $this->hasOne(Account::className(), ['user_id' => 'id']);
+    }
+
+    /**
+     * @return array
+     */
+    public static function dropList(): array
+    {
+        $model = static::find()->orderBy('id desc')->all();
+
+        return ArrayHelper::map($model, 'id', 'name');
     }
 }

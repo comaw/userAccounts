@@ -7,20 +7,38 @@ $config = [
     'id' => 'basic',
     'basePath' => dirname(__DIR__),
     'bootstrap' => ['log'],
+    'sourceLanguage'=>'en_US',
+    'language' => 'en',
+    'charset' => 'UTF-8',
+    'timeZone' => 'Europe/Kiev',
+    'name' => 'Users Accounts',
     'aliases' => [
         '@bower' => '@vendor/bower-asset',
         '@npm'   => '@vendor/npm-asset',
     ],
     'components' => [
         'request' => [
-            // !!! insert a secret key in the following (if it is empty) - this is required by cookie validation
-            'cookieValidationKey' => 'J4gtyO_ZSymE1fi8_4O5-G5Kp_-qT7oM',
+            'cookieValidationKey' => 'J4gtyO_ZSymE1fghfgfi8_4O5-G5Kp_-qT7oM',
+            'csrfParam' => '_csrf-frontend',
+            'enableCsrfValidation' => false,
+            'baseUrl' => '',
         ],
         'cache' => [
+            'class' => 'yii\caching\DbCache',
+        ],
+        'cacheFile' => [
             'class' => 'yii\caching\FileCache',
         ],
+        'formatter' => [
+            'timeZone' => 'Europe/Kiev',
+            'dateFormat' => 'yyyy-MM-dd',
+            'datetimeFormat' => 'yyyy-MM-dd H:i:s',
+            'decimalSeparator' => ',',
+            'thousandSeparator' => ' ',
+            'currencyCode' => '',
+        ],
         'user' => [
-            'identityClass' => 'app\models\User',
+            'identityClass' => 'app\models\login\User',
             'enableAutoLogin' => true,
         ],
         'errorHandler' => [
@@ -43,14 +61,7 @@ $config = [
             ],
         ],
         'db' => $db,
-        /*
-        'urlManager' => [
-            'enablePrettyUrl' => true,
-            'showScriptName' => false,
-            'rules' => [
-            ],
-        ],
-        */
+        'urlManager' => include (__DIR__ . '/urlManager.php'),
     ],
     'params' => $params,
 ];
